@@ -10,3 +10,4 @@ apps/web/.next
 .turbo
 .env
 .env.local
+.vercel
