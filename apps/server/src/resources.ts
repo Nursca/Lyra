@@ -5,6 +5,7 @@ import { takeRate } from "./rates.js";
 import { withLedger } from "./store.js";
 import type { OperationId, PaymentPayload, PaymentRequired } from "./types.js";
 import { ecbCompare, ecbSpot, feeSnapshot, meridianCompare, meridianSpot, nextHolidays, currentWeather, UpstreamError } from "./upstream.js";
+import { serviceOrigin } from "./origin.js";
 import { buildPaymentRequired, buildRequirements, decodeHeader, encodeHeader } from "./x402.js";
 
 type Spec = {
@@ -53,7 +54,7 @@ async function gate(app: Express, req: Request, res: Response, spec: Spec) {
   const ledger = await withLedger((state) => ({
     payTo: state.merchantPublic,
   }));
-  const origin = String(app.locals.origin ?? `http://127.0.0.1:${process.env.PORT ?? 4020}`);
+  const origin = serviceOrigin(app.locals.origin);
   const resourceUrl = `${origin}${req.originalUrl}`;
   const requirements = buildRequirements({
     amount: operation.priceAtomic,

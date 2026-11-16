@@ -8,7 +8,9 @@ import { addAtomic, subAtomic, todayUtc } from "./stellar.js";
 function ledgerFile(): string {
   const dataDir =
     process.env.LYRA_DATA_DIR ??
-    path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data");
+    (process.env.VERCEL
+      ? path.join("/tmp", "lyra")
+      : path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data"));
   return path.join(dataDir, "ledger.json");
 }
 

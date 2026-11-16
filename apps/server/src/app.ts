@@ -6,6 +6,7 @@ import { catalogueStats, getApi, getProvider, listApis, listProviders } from "./
 import { supported, settlePayment, verifyPayment } from "./facilitator.js";
 import { applyPolicy, handleMcp } from "./mcp.js";
 import { isCategory } from "./policy.js";
+import { serviceOrigin } from "./origin.js";
 import { registerResources } from "./resources.js";
 import { withLedger } from "./store.js";
 import { formatUsdc, STELLAR, subAtomic } from "./stellar.js";
@@ -140,7 +141,7 @@ export function createApp() {
       res.status(400).json({ error: "instruction is required" });
       return;
     }
-    const origin = String(app.locals.origin ?? `http://127.0.0.1:${process.env.PORT ?? 4020}`);
+    const origin = serviceOrigin(app.locals.origin);
     const stream = req.header("accept")?.includes("application/x-ndjson");
     if (stream) {
       res.setHeader("content-type", "application/x-ndjson; charset=utf-8");
@@ -172,13 +173,13 @@ export function createApp() {
     const clean: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) clean[key] = String(value);
     const keys = await withLedger((state) => ({ secret: state.payerSecret, from: state.payerPublic }));
-    const origin = String(app.locals.origin ?? `http://127.0.0.1:${process.env.PORT ?? 4020}`);
+    const origin = serviceOrigin(app.locals.origin);
     const paid = await executePaid({ origin, api, operation, params: clean, secret: keys.secret, from: keys.from });
     res.status(paid.status === "completed" ? 200 : 402).json(paid);
   });
 
   app.post("/mcp", async (req, res) => {
-    const origin = String(app.locals.origin ?? `http://127.0.0.1:${process.env.PORT ?? 4020}`);
+    const origin = serviceOrigin(app.locals.origin);
     res.json(await handleMcp(req.body ?? {}, origin));
   });
 
@@ -225,6 +226,9 @@ function viewWallet(state: {
     },
   };
 }
+
+const app = createApp();
+export default app;
 
 export function start(port = Number(process.env.PORT ?? 4020)): Promise<Server> {
   const app = createApp();
